@@ -37,12 +37,6 @@
           <Field name="hiddenField" type="hidden" class="form-control" v-model="honeypot" />
         </div>
 
-        <RecaptchaV2
-          v-model="recaptchaToken"
-          siteKey=import.meta.env.VITE_SML_RECAPTCHA_SITE_KEY
-          class="recaptcha"
-        />
-
         <button type="submit" :disabled="isSubmitting" class="submit-btn">{{ isSubmitting ? 'Submitting...' : 'Submit' }}</button>
 
         <div v-if="submitSuccess" class="success-message">
@@ -59,9 +53,7 @@ import { ref } from 'vue';
 import { Field, ErrorMessage, useForm } from 'vee-validate'
 import { formSchema } from '../utils/formSchema';
 import emailjs from '@emailjs/browser';
-import { RecaptchaV2 } from 'vue3-recaptcha-v2';
 
-const recaptchaToken = ref('');
 const lastSubmissionTime = ref(null);
 const honeypot = ref('');
 const isSubmitting = ref(false);
@@ -93,11 +85,6 @@ const handleSubmit = veeHandleSubmit(async (values) => {
       return;
     }
 
-    if (!recaptchaToken.value) {
-      submitError.value = 'Please complete the reCAPTCHA.';
-      return;
-    }
-
     if (honeypot.value) {
       return;
     }
@@ -107,20 +94,12 @@ const handleSubmit = veeHandleSubmit(async (values) => {
     submitSuccess.value = false;
     submitError.value = '';
 
-
-    const submissionData = {
-      ...values,
-      recaptchaToken: recaptchaToken.value
-    }
-
-    await emailjs.send(serviceID, templateID, submissionData, publicKey);
+    await emailjs.send(serviceID, templateID, values, publicKey);
 
     submitSuccess.value = true;
     lastSubmissionTime.value = now;
 
     resetForm();
-
-    recaptchaToken.value = '';
 
     setTimeout(() => {
       submitSuccess.value = false;
